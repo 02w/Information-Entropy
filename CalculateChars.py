@@ -6,7 +6,7 @@ f = open("test.jpg", "rb")
 content = f.readlines()
 
 # 匹配 \xhh 格式的正则
-hexpattern = r'\\x[0-9a-z]{2}'
+hexpattern = r'\\x[0-9a-f]{2}'
 
 special = ["\\n", "\\t", "\\a", "\\b", "\\f", "\\r", "\\v","\\\"","\\'","\\0","\\\\"]
 
