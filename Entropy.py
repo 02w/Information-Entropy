@@ -13,30 +13,33 @@ while(1):
         break
 
     if (stats.__contains__(char)):
-            stats[char] = stats[char] + 1
+        stats[char] = stats[char] + 1
     else:
         stats[char] = 1
 
-# 返回所有可遍历的键值对的元组的列表
-itemlist = stats.items()
+# 返回所有可遍历的键值对的元组的列表,按值排序
+itemlist = sorted(stats.items(), key = lambda x: x[1], reverse = True)
 
 # 总字符数
 total = 0
 for i in itemlist:
-    print(i[0], end=":")
-    print(i[1])
     total = total + i[1]
 
-# 计算信息熵
-freq = []
+print("总字符数: %d" % total, end = "\n\n")
+
+freqlist = []
 for i in itemlist:
-    freq.append(i[1] / total)
+    print("%-4s    次数: %d" % (i[0], i[1]), end = "    ")
+    freq = i[1] / total
+    freqlist.append(freq)
+    print("频率: %f" % freq)
 
+# 计算信息熵
 entropy = 0
-for i in freq:
-    entropy = entropy - (i * math.log(i))
+for i in freqlist:
+    entropy = entropy - (i * math.log(i, 2))
 
-print("信息熵", end=":")
-print(entropy)
+print()
+print("信息熵: %f" % entropy)
 
 f.close()
