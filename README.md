@@ -2,6 +2,5 @@
 
 Python版:  ` f = open("test.jpg", "rb") ` 打开文件。  
 
-C版: 输入文件名，如 ` D:\\test.jpg ` 。
+C版: 输入文件名，如 ` D:\\test.jpg ` , 可处理中文字。
 
-Issue: 无法处理中文。

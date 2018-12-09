@@ -5,7 +5,8 @@
 
 struct charac
 {
-    int data;           //字符
+    int data; //字符
+    char chinese[3];
     unsigned int count; //该字符的次数
     float freq;         //该字符的频率
     struct charac *next;
@@ -22,53 +23,115 @@ struct charac *createCharLink(FILE *fp)
 
     while (!feof(fp)) //是否到文件尾
     {
-
-        if (head == NULL)
+        if ((ch >= 161) && (ch <= 247)) //处理中文
         {
-            new = (struct charac *)malloc(sizeof(struct charac));
-            new->data = ch;
-            new->count = 1;
-            new->next = NULL;
-
-            head = new;
-            tail = new;
-        }
-        else
-        {
-            p = head;
-            while ((p->data != ch) && (p->next != NULL))
+            int ch2 = fgetc(fp);
+            if ((ch2 >= 161) && (ch2 <= 254))
             {
-                p = p->next;
+                if (head == NULL)
+                {
+                    new = (struct charac *)malloc(sizeof(struct charac));
+                    new->data = -2; //标记是中文
+                    new->chinese[0] = ch;
+                    new->chinese[1] = ch2;
+                    new->chinese[2] = '\0';
+                    new->count = 1;
+                    new->next = NULL;
+
+                    head = new;
+                    tail = new;
+                }
+                else
+                {
+                    p = head;
+                    //定位 p
+                    while (((p->chinese[0] != ch - 256) || (p->chinese[1] != ch2 - 256)) && (p->next != NULL))
+                    {
+                        p = p->next;
+                    }
+
+                    if ((p->chinese[0] != ch - 256) || (p->chinese[1] != ch2 - 256)) //新字符
+                    {
+                        new = (struct charac *)malloc(sizeof(struct charac));
+                        new->data = -2;
+                        new->chinese[0] = ch;
+                        new->chinese[1] = ch2;
+                        new->chinese[2] = '\0';
+                        new->count = 1;
+                        new->next = NULL;
+
+                        tail->next = new;
+                        tail = new;
+                    }
+                    else
+                    {
+                        p->count += 1; //已有字符
+                    }
+                }
             }
-            if (p->data != ch) //新字符
+            else
+            {
+                fseek(fp, -1, SEEK_CUR); //不是中文，回退
+            }
+        }
+        else // 不是中文
+        {
+            if (head == NULL)
             {
                 new = (struct charac *)malloc(sizeof(struct charac));
                 new->data = ch;
+                new->chinese[0] = 0;
+                new->chinese[1] = 0;
+                new->chinese[2] = 0;
                 new->count = 1;
                 new->next = NULL;
 
-                tail->next = new;
+                head = new;
                 tail = new;
             }
             else
             {
-                p->count += 1; //已有字符
+                p = head;
+                while ((p->data != ch) && (p->next != NULL))
+                {
+                    p = p->next;
+                }
+
+                if (p->data != ch) //新字符
+                {
+                    new = (struct charac *)malloc(sizeof(struct charac));
+                    new->data = ch;
+                    new->chinese[0] = 0;
+                    new->chinese[1] = 0;
+                    new->chinese[2] = 0;
+                    new->count = 1;
+                    new->next = NULL;
+
+                    tail->next = new;
+                    tail = new;
+                }
+                else
+                {
+                    p->count += 1; //已有字符
+                }
             }
         }
-
         ch = fgetc(fp);
     }
     return head;
 }
 
-void printChar(char data, int count, float freq)
+void printChar(int data, char x[3], int count, float freq)
 {
     if (isgraph(data) != 0)
         //可打印字符
         printf("%-11c\tcount:%-10d\tfrequency:%f\n", data, count, freq);
-    else
+    else if (data != -2)
         //其它字符，打印ASCII
         printf("%-4d(ASCII)\tcount:%-10d\tfrequency:%f\n", data, count, freq);
+    else
+        //打印中文
+        printf("%-11s\tcount:%-10d\tfrequency:%f\n", x, count, freq);
 }
 
 void printLink(struct charac *head)
@@ -77,7 +140,7 @@ void printLink(struct charac *head)
     p = head;
     while (p != NULL) //遍历链表
     {
-        printChar(p->data, p->count, p->freq);
+        printChar(p->data, p->chinese, p->count, p->freq);
         p = p->next;
     }
 }
@@ -140,12 +203,12 @@ void listSort(struct charac **head)
         current = *head;
         sorted = 1;
 
-        /* 反复用当前节点 current 与下一个节点 post 进行比较 */
+        //冒泡排序
         while ((post = current->next) != sentinel)
         {
             if (current->count < post->count)
             {
-                sorted = 0; // 发生交换，则仍未有序
+                sorted = 0; //发生交换，则仍未有序
                 current->next = post->next;
                 post->next = current;
 
@@ -154,7 +217,7 @@ void listSort(struct charac **head)
                 previous = post;
 
                 if (current == *head)
-                    *head = post; // 保证头指针指向最小的节点
+                    *head = post; //保证头指针指向最小的节点
             }
             else
             {
@@ -163,7 +226,7 @@ void listSort(struct charac **head)
             }
         }
         sentinel = current; // current 为该趟排好序的节点
-    } while (!sorted);  // 若未发生交换，则已经有序
+    } while (!sorted);      //若未发生交换，则已经有序
 }
 
 int main(void)
