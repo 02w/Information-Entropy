@@ -59,7 +59,7 @@ struct charac *insert(struct charac *head, char ch, char ch2)
     return head;
 }
 
-struct charac *createCharLink(FILE *fp)
+struct charac *createCharLinkZh(FILE *fp)
 {
     struct charac *head, *new, *tail, *p;
     int ch, ch2;
@@ -71,10 +71,10 @@ struct charac *createCharLink(FILE *fp)
     while (!feof(fp)) //是否到文件尾
     {
 
-        if ((ch >= 161) && (ch <= 247)) //处理中文
+        if ((ch >= 129) && (ch <= 254)) //处理中文GBK
         {
             ch2 = fgetc(fp);
-            if ((ch2 >= 161) && (ch2 <= 254))
+            if ((ch2 >= 64) && (ch2 <= 254) && (ch != 127))
             {
                 //是中文，ch2不变
                 head = insert(head, ch, ch2); //插入ch,ch2
@@ -82,7 +82,7 @@ struct charac *createCharLink(FILE *fp)
             else
             {
                 fseek(fp, -1, SEEK_CUR); //不是中文，回退1字节
-                ch2 = 0;                 //ch2置0，因为若之前有中文会残留ch2
+                ch2 = 0;                 //ch2置0
                 head = insert(head, ch, ch2);
             }
         }
@@ -91,6 +91,23 @@ struct charac *createCharLink(FILE *fp)
             ch2 = 0;
             head = insert(head, ch, ch2);
         }
+        ch = fgetc(fp);
+    }
+    return head;
+}
+
+struct charac *createCharLink(FILE *fp)
+{
+    struct charac *head, *new, *tail, *p;
+    int ch, ch2 = 0;
+
+    head = NULL;
+
+    ch = fgetc(fp); //读取一个字符
+
+    while (!feof(fp)) //是否到文件尾
+    {
+        head = insert(head, ch, ch2);
         ch = fgetc(fp);
     }
     return head;
@@ -120,7 +137,7 @@ void printLink(struct charac *head)
     }
 }
 
-struct charac *readFile(char faddress[]) //传入文件地址
+struct charac *readFile(char faddress[], int isZh) //传入文件地址
 {
     FILE *fp;
 
@@ -132,7 +149,7 @@ struct charac *readFile(char faddress[]) //传入文件地址
     }
 
     struct charac *head;
-    head = createCharLink(fp); //创建链表
+    head = (isZh == 1) ? createCharLinkZh(fp) : createCharLink(fp); //创建链表
 
     return head;
 }
@@ -209,21 +226,39 @@ int main(void)
     struct charac *head;
     int total;
     char faddress[1024];
+    char zh;
+    int isZh; //标记是否采用中文处理
 
     printf("Enter file address(no more than 1024 chars, e.g. D:\\\\test.txt):\n");
 
     scanf("%1024s", faddress); //读入文件名
 
-    head = readFile(faddress); //读文件创建链表
+    EnableZh:
+    fflush(stdin);
 
-    listSort(&head); //按count排序
+    printf("Enable Chinese processing?\nNote:Only support GBK.\nEnter Y or N:");
+    scanf("%c", &zh);
 
-    total = countChar(head); //总字符数
+    if (zh == 'y' || zh == 'Y')
+        isZh = 1;
+    else if(zh == 'n' || zh == 'N')
+        isZh = 0;
+    else
+    {
+        printf("Error!\n");
+        goto EnableZh;
+    }
+
+    head = readFile(faddress, isZh);                  //读文件创建链表
+
+    listSort(&head);                                  //按count排序
+
+    total = countChar(head);                          //总字符数
     printf("Total Characters: %d\n", total);
 
     printf("Entropy: %f\n", calEntropy(head, total)); //打印信息熵
 
-    printLink(head); //打印字符统计数据
+    printLink(head);                                  //打印字符统计数据
 
     system("pause");
     return 0;
