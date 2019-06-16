@@ -315,8 +315,8 @@ void listSort(CHAR **head)
 int main(void)
 {
     CHAR *head;
-    int total;
-    char faddress[1024];
+    unsigned int total;
+    char faddress[1025];
     char zh; //输入 y/n
     int isZh = 0; //标记是否采用中文处理
 
@@ -352,7 +352,7 @@ int main(void)
     listSort(&head); //按count排序
 
     total = countChar(head); //总字符数
-    printf("Total Characters: %d\n", total);
+    printf("Total Characters: %u\n", total);
 
     printf("Entropy: %f\n", calEntropy(head, total)); //打印信息熵
 
